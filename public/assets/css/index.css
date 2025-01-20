@@ -1,0 +1,27 @@
+.bs-stepper-header {
+    display: flex;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    white-space: nowrap;
+    /* Para evitar el salto de línea */
+    user-select: none;
+    /* Para evitar la selección de texto */
+}
+
+.bs-stepper-header::-webkit-scrollbar {
+    display: none;
+}
+
+.step {
+    flex: 0 0 auto;
+    margin-right: 20px;
+    cursor: grab;
+    /* Cambia el cursor al pasar sobre los elementos */
+}
+
+.step:active {
+    cursor: grabbing;
+    /* Cambia el cursor cuando se está arrastrando */
+}

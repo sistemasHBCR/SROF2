@@ -1,0 +1,167 @@
+ usar variables de entorno y configuraciones en Laravel para manejar rutas de manera más eficiente. solución paso a paso:
+
+1. Usar Variables de Entorno
+Primero, define la ruta en tu archivo .env:
+
+ASSETS_PATH=http://localhost/utilities/public/assets/
+
+2. Configuración en config/app.php
+Luego, en tu archivo config/app.php, añade una nueva entrada en el array config:
+
+PHP
+
+'assets_path' => env('ASSETS_PATH', 'http://localhost/utilities/public/assets/'),
+Código generado por IA. Revisar y usar cuidadosamente. Más información sobre preguntas frecuentes.
+3. Usar la Configuración en tus Vistas
+Finalmente, en tus vistas Blade, puedes usar la función config para obtener la ruta:
+
+HTML
+
+<html lang="en" class="light-style layout-wide customizer-hide" dir="ltr" data-theme="theme-default"
+    data-assets-path="{{ config('app.assets_path') }}" data-template="vertical-menu-template">
+Código generado por IA. Revisar y usar cuidadosamente. Más información sobre preguntas frecuentes.
+Actualización Automática de la URL
+Para evitar que la URL se quede guardada en los navegadores, puedes usar una combinación de técnicas:
+
+
+
+##CAMBIAR RESTABLECIMIENTO DE CONTRASEÑA DE CORREO DE FORMA TRADICIONAL SMTP A AZURE
+1. Configuración del Archivo .env
+Asegúrate de que tu archivo .env tenga las configuraciones necesarias para Azure:
+
+MS_CLIENT_ID=824d36e4-a415-
+MS_TENANT_ID=45bfb039-3115-
+MS_CLIENT_SECRET=QuS8Q~
+MS_REDIRECT_URI=http://localhost/Utilities/public/callback
+
+2. Crear el Trait SendsAzurePasswordResetEmail
+Este trait se encargará de enviar los correos de restablecimiento de contraseña utilizando Azure:
+
+<?php
+
+namespace App\Traits;
+
+use App\Services\MicrosoftGraphService;
+use Illuminate\Support\Facades\Log;
+
+trait SendsAzurePasswordResetEmail
+{
+    protected $graphService;
+
+    public function initializeSendsAzurePasswordResetEmail()
+    {
+        $this->graphService = new MicrosoftGraphService();
+    }
+
+    public function sendPasswordResetEmail($to, $token)
+    {
+        $subject = 'Restablecimiento de Contraseña';
+        $introLines = [
+            'Recibiste este correo porque solicitaste un restablecimiento de contraseña para tu cuenta.',
+            'Haz clic en el siguiente enlace para restablecer tu contraseña:',
+            url(route('password.reset', ['token' => $token, 'email' => $to], false)),
+            'Si no solicitaste un restablecimiento de contraseña, no se requiere ninguna acción adicional.'
+        ];
+
+        // Renderizar el contenido del correo a partir de la vista
+        $bodyContent = view('emails.password-reset', ['introLines' => $introLines])->render();
+
+        // Llamar al servicio para enviar el correo
+        $graphService = new MicrosoftGraphService();
+        $result = $graphService->sendEmail([$to], $subject, $bodyContent);
+
+        if (!$result['sent']) {
+            // Registrar el error para depuración
+            Log::error('Error al enviar el correo de restablecimiento de contraseña', ['error' => $result['error']]);
+        }
+    }
+}
+
+
+
+3. Modificar el Controlador PasswordResetLinkController
+Actualiza el controlador para utilizar el nuevo trait y enviar los correos a través de Azure:
+
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Traits\SendsAzurePasswordResetEmail;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
+use Illuminate\View\View;
+use App\Models\User;
+
+class PasswordResetLinkController extends Controller
+{
+    use SendsAzurePasswordResetEmail;
+
+    public function __construct()
+    {
+        $this->initializeSendsAzurePasswordResetEmail();
+    }
+
+    /**
+     * Display the password reset link request view.
+     */
+    public function create(): View
+    {
+        return view('auth.forgot-password');
+    }
+
+    /**
+     * Handle an incoming password reset link request.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        // Obtener el usuario por correo electrónico
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            // Generar el token de restablecimiento de contraseña
+            $token = Password::broker()->createToken($user);
+
+            // Enviar el correo de restablecimiento de contraseña a través de Azure
+            $this->sendPasswordResetEmail($request->email, $token);
+            return back()->with('status', __('We have emailed your password reset link!'));
+        } else {
+            return back()->withInput($request->only('email'))
+                         ->withErrors(['email' => __('Unable to find a user with that email address.')]);
+        }
+    }
+}
+
+4. Crear la Vista del Correo
+Crea una vista para el correo de restablecimiento de contraseña en resources/views/emails/password-reset.blade.php:
+
+<!-- resources/views/emails/password-reset.blade.php -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restablecimiento de Contraseña</title>
+</head>
+<body>
+    <h1>Restablecimiento de Contraseña</h1>
+    @foreach ($introLines as $line)
+        <p>{{ $line }}</p>
+    @endforeach
+    <p>Si no solicitaste un restablecimiento de contraseña, no se requiere ninguna acción adicional.</p>
+</body>
+</html>
+
+
+Resumen de Cambios
+Configuración del Archivo .env: Añadir las credenciales de Azure.
+Crear el Trait SendsAzurePasswordResetEmail: Para manejar el envío de correos a través de Azure.
+Modificar el Controlador PasswordResetLinkController: Para utilizar el nuevo trait y enviar correos de restablecimiento de contraseña a través de Azure.
+Crear la Vista del Correo: Para el contenido del correo de restablecimiento de contraseña.

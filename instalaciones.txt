@@ -1,0 +1,780 @@
+git add .
+git commit -m "Agregando nuevas funcionalidades v1"
+git push
+
+
+INMEDIATAMENTE DESPUES DEL CREAR PROYECTO(Solo probado en x10 y x11)
+
+
+::::::::::Configuración de la Ruta de los Assets en la Carpeta Public para la Plantilla de Vista::::::::::::::::
+Para cargar todos los archivos CSS y JS en nuestra plantilla, es necesario especificar la URL de los assets en todas las vistas de la siguiente manera:
+
+HTML
+<html lang="en" class="light-style layout-wide customizer-hide" dir="ltr" data-theme="theme-default"
+    data-assets-path="http://localhost/utilities/public/assets/" data-template="vertical-menu-template">
+
+
+    Solución para Evitar Cambios Manuales en Múltiples Vistas
+Para evitar tener que cambiar la URL en todas las vistas que contienen data-assets-path 
+en diferentes proyectos, podemos configurar la URL de los assets en el archivo de configuración de la aplicación. Aquí están los pasos:
+
+1. Definir la URL de los Assets en el Archivo .env
+    Abre tu archivo .env y añade la siguiente línea:
+    ASSETS_PATH=http://localhost/utilities/public/assets/
+
+2.Añadir la Variable en el Archivo de Configuración:
+    Abre el archivo config/app.php y añade la siguiente entrada en el array de configuración:
+        'assets_path' => env('ASSETS_PATH', 'http://localhost/utilities/public/assets/'),
+
+3. Usar la Variable en las Vistas:
+    En las vistas que utilizan data-assets-path, cambia la URL para que tome el valor del archivo .env:
+
+HTML
+<html lang="en" class="light-style layout-navbar-fixed layout-menu-fixed layout-compact" dir="ltr"
+    data-assets-path="{{ config('app.assets_path') }}" data-theme="theme-default" data-template="vertical-menu-template">
+
+
+Nota Importante
+Después de realizar estos cambios, es importante limpiar la caché de configuración del proyecto
+para que Laravel lea los nuevos valores del archivo .env. Ejecuta el siguiente comando en tu terminal:
+
+php artisan config:cache
+
+
+Beneficios
+Centralización: Definir la URL de los assets en el archivo .env permite cambiarla en un solo lugar.
+Facilidad de Mantenimiento: Al usar config('app.assets_path'), se reduce la necesidad de modificar múltiples archivos cuando se cambia la URL de los assets.
+Flexibilidad: Permite que la aplicación se adapte fácilmente a diferentes entornos (desarrollo, producción, etc.) cambiando solo las variables en el archivo .env.
+Con esta configuración, cualquier cambio en la URL de los assets se reflejará automáticamente en todas las vistas, mejorando la gestión y el mantenimiento de tu proyecto.
+
+::::::::::Se instalo laravel braze (AUTH):::::::::::::::
+1-  composer require laravel/breeze --dev
+2 - php artisan breeze:install
+php artisan migrate
+npm install
+npm run dev
+
+
+referencias: https://www.youtube.com/watch?v=f1hCx-NXbek
+documento: https://laravel.com/docs/11.x/starter-kits
+
+::::::::::Se instalo laravel Spatie (Roles y permisos):::::::::::::::
+1- composer require spatie/laravel-permission
+2- se añade el provider:
+
+en x10 o inferior
+
+
+config/app.php
+'providers' => [
+    // ...
+    Spatie\Permission\PermissionServiceProvider::class,
+];
+
+en x11 o posterior
+bootstrap/providers.php
+return [
+    App\Providers\AppServiceProvider::class,
+    Spatie\Permission\PermissionServiceProvider::class,
+];
+
+
+3 - php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+4 -  php artisan optimize:clear
+ # or
+ php artisan config:clear
+5- php artisan migrate
+
+6 - añadir en modelo user:  use HasRoles;
+
+documento: https://spatie.be/docs/laravel-permission/v6/installation-laravel
+
+::::::::::Se instalo laravel excel::::::::::::::::
+
+1- composer require maatwebsite/excel --with-all-dependencies
+
+
+2- se añade provider:
+
+en x10 o inferior
+ config/app.php
+
+'providers' => [
+    /*
+     * Package Service Providers...
+     */
+    Maatwebsite\Excel\ExcelServiceProvider::class,
+];
+
+en x11 o posterior
+bootstrap/providers.php
+return [
+   App\Providers\AppServiceProvider::class,
+   Maatwebsite\Excel\ExcelServiceProvider::class,
+];
+
+
+3- en config/app.php se añadió
+
+use Illuminate\Support\Facades\Facade;
+--
+'aliases' => Facade::defaultAliases()->merge([
+    ...
+    'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+])->toArray(),
+
+
+4- php artisan vendor:publish --provider="Maatwebsite\Excel\ExcelServiceProvider" --tag=config
+4- Se ejecuto composer require phpoffice/phpspreadsheet
+
+
+referencia como se usa libreria: https://www.youtube.com/watch?v=8OspZp5G2Ko
+documentacion: https://docs.laravel-excel.com/3.1/getting-started/installation.html
+
+
+
+:::::::::Se corrigio hora local proyecto laravel::::::::::::::::
+
+
+\app\Providers\AppServiceProvider.php
+    public function boot(): void
+    {
+        date_default_timezone_set('America/Mazatlan');
+    }
+
+
+
+
+:::::::::Haciendo funcionar rol super user y suspendido::::::::::::::::
+1- crearemos un middleware: php artisan make:middleware RoleMiddleware
+2. añadimos la estroctura similar a esta:
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
+
+class RoleMiddleware
+{
+    public function handle($request, Closure $next)
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            // Si el usuario es 'super user', ignorar cualquier asignación de permiso
+            if ($user->hasRole('Administrador')) {
+                Gate::before(function ($user, $ability) {
+                    return true;
+                });
+            }
+
+            // Si el usuario es 'suspendido', rechazar el acceso
+            if ($user->hasRole('suspendido')) {
+                abort(403, 'Tu cuenta está suspendida.');
+            }
+        }
+
+        return $next($request);
+    }
+}
+
+
+3. añadimos el middleware al kernel. 
+   para lavel x10 i inferior:
+
+   En app/Http/Kernel.php, agrega el middleware a la propiedad $routeMiddleware:
+
+   protected $routeMiddleware = [
+    // ...
+    'role.middleware' => \App\Http\Middleware\RoleMiddleware::class,
+];
+
+    para laravel 11 o posterior
+
+    en bootstrap/app, agrega el middleware a la propiedad $routeMiddleware:
+
+    use App\Http\Middleware\RoleMiddleware;
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(RoleMiddleware::class);
+    })
+
+//forma alternativa super rol: https://spatie.be/docs/laravel-permission/v6/basic-usage/super-admin
+
+
+
+:::::::::Haciendo usuario logieado no pueda volver a la vista login::::::::::::::::
+1. crear el middleware: php artisan make:middleware RedirectIfAuthenticated
+2. añadimos la estroctura similar a esta:
+
+use Closure;
+use Illuminate\Support\Facades\Auth;
+
+class RedirectIfAuthenticated
+{
+    public function handle($request, Closure $next, $guard = null)
+    {
+        if (Auth::guard($guard)->check()) {
+            // Si el usuario está autenticado, redirigir a la ruta de inicio o a la ruta deseada
+            return redirect('/home'); // Cambia '/home' por la ruta a la que quieras redirigir
+        }
+
+        return $next($request);
+    }
+}
+
+
+3. añadimos el middleware al kernel. 
+   para lavel x10 i inferior:
+
+   En app/Http/Kernel.php, agrega el middleware a la propiedad $routeMiddleware:
+
+   protected $routeMiddleware = [
+    // ...
+     'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+];
+
+    para laravel 11 o posterior
+
+    en bootstrap/app, agrega el middleware a la propiedad $routeMiddleware:
+
+    use App\Http\Middleware\RedirectIfAuthenticated;
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(RedirectIfAuthenticated::class);
+    })
+
+
+Nota: una forma sencilla de agrupar middlewares es creando un grupo, por ejemplo. (Basado en laravel 11)
+
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\RedirectIfAuthenticated;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+
+        $middleware->appendToGroup('MainRole', [
+            RoleMiddleware::class
+        ]);
+     
+        $middleware->prependToGroup('RedirectIfAuthenticated' , [
+            RedirectIfAuthenticated::class,
+        ]);
+    
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+
+
+
+
+Haciendo invocacion del middleware en web.php
+Route::middleware(['auth', 'MainRole'])->group(function () {
+    //rutas
+    });
+
+
+
+/****EXPULSAR USUARIOS AL MODULO LOGIN UNA VEZ SESSION EXPIRE********/
+
+1. Definir la Ruta para Verificar la Sesión
+En web.php, define la ruta /check-session fuera de cualquier middleware que requiera autenticación:
+
+PHP
+
+// **Check Session: true expirado, false activo**
+Route::get('/check-session', function () {
+    return response()->json(['guest' => !Auth::check()]);
+});
+
+2. Definir la URL Base en el Archivo .env
+Añade la URL base en tu archivo .env:
+
+BASE_URL=http://localhost/utilities/public
+
+3. Añadir la Variable en el Archivo de Configuración
+En config/app.php, añade la variable base_url:
+
+PHP
+
+'base_url' => env('BASE_URL', 'http://localhost/utilities/public'),
+
+4. Crear el Archivo JavaScript
+Crea un archivo JavaScript en public/assets/vendor/js llamado session-expired.js con el siguiente contenido:
+
+JavaScript
+
+const baseUrl = document.querySelector('meta[name="base-url"]').getAttribute('content');
+// Variable para almacenar el mensaje
+let message = '';
+
+async function checkSession() {
+    try {
+        const response = await fetch(`${baseUrl}/check-session`);
+        const data = await response.json();
+
+        // Define el estado en función del valor de guest
+        const status = data.guest ? 'inactive' : 'active';
+
+        // Actualiza el mensaje basado en el estado
+        if (status === 'active') {
+            //message = 'The session is active.';
+        } else {
+            //message = 'The session is inactive.';
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error fetching session status:', error);
+    }
+}
+
+// Ejecutar checkSession cada 60 segundos (60000 milisegundos)
+setInterval(checkSession, 60000);
+
+// Ejecutar checkSession inmediatamente al cargar la página
+checkSession();
+
+5. Incluir el Archivo JavaScript en la Vista
+Añade el script en la vista donde quieras utilizarlo:
+
+HTML
+
+<script src="{{ asset('assets/vendor/js/session-expired.js') }}"></script>
+
+6. Añadir la Meta Etiqueta en el Head del HTML
+Asegúrate de incluir la meta etiqueta con la URL base en el head de tu HTML:
+
+HTML
+
+<meta name="base-url" content="{{ $baseUrl }}">
+
+7. Compartir la URL Base con Todas las Vistas
+En app/Providers/AppServiceProvider.php, añade el siguiente código:
+
+PHP
+
+use Illuminate\Support\Facades\View;
+
+public function boot()
+{
+    View::share('baseUrl', config('app.base_url'));
+}
+
+Nota Final
+Después de realizar estos cambios, limpia la caché de configuración del proyecto para asegurarte de que Laravel lea los nuevos valores del archivo .env:
+
+php artisan config:cache
+
+Resumen
+Estos pasos configuran una URL base y una ruta de verificación de sesión en Laravel, permitiendo que la aplicación maneje la expiración 
+de sesión de manera eficiente y centralizada. Esto facilita el mantenimiento y la adaptación del proyecto a diferentes entornos.
+
+:::::::::Creando metodo para registro de actividad y auditoria::::::::::::::::
+1. Crear el Trait
+Primero, crea el archivo del trait en app/Traits/LogsActivity.php y define el trait:
+
+2. contenido del trait
+<?php
+
+namespace App\Traits;
+
+use App\Models\audit;
+use Illuminate\Support\Facades\Auth;
+
+trait LogsActivity
+{
+    public function logActivity($action, $panel, $module, $description = null, $datatable, $before = null, $after = null)
+    {
+        $databefore = $before !== null ? json_encode($before) : '';
+        $dataafter = $after !== null ? json_encode($after) : '';
+
+        audit::create([
+            'user_id' => Auth::id(),
+            'action' => $action,
+            'panel' => $panel,
+            'module' => $module,
+            'description' => $description,
+            'datatable' => $datatable,
+            'databefore' =>  $databefore,
+            'dataafter' => $dataafter
+        ]);
+    }
+}
+
+
+/****USAR EL TRAIT EN CONTROLADORES********/
+1. Usar el Trait en tu Controlador
+- use App\Traits\LogsActivity;
+-despues del class en el metodo agregar la referencia del trait, ejemplo:
+
+class PeriodController extends Controller
+{
+    use LogsActivity;
+
+    //metodos
+}
+
+2.dentro de los metodos agregar funcion, (Deberia de ir despues de cada update o create)
+
+
+    // Buscar la residencia por el ID
+    $owner = owner::findOrFail($id);
+    $before = clone  $owner;  //capturar modelo antes de actualizar
+    $owner->name = $request->name;
+    $owner->email = $request->email;
+    $owner->active = $request->active;
+    $owner->save();
+    $owner->refresh();
+
+    // Registrar la actividad
+    $this->logActivity(
+    'update',
+    'Utilities',
+    'Dueños',
+    'Actualizo un registro',
+    'owners',
+    $before,
+    $owner
+    );
+
+/****USAR EL TRAIT PARA REGISTRO LOGIN/LOGOUT********/
+1. Iniciar Sesión (Login)
+Puedes registrar un log cuando un usuario inicia sesión usando el evento "Illuminate\Auth\Events\Login". Aquí hay un ejemplo de cómo hacerlo:
+laravel x10:
+en la ruta: "App\Providers\EventServiceProvider.php" añadir lo siguiente
+
+use Illuminate\Auth\Events\Login;
+use App\Listeners\LogLoginActivity;
+
+protected $listen = [
+    Login::class => [
+        LogLoginActivity::class,
+    ],
+];
+
+en laravel x11:
+en la ruta: "app\Http\Controllers\Auth\AuthenticatedSessionController.php" añadir lo siguiente
+
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        $this->logActivity(
+            'Login',
+            'Auth', 
+            'Inicio de sesión', 
+            'El usuario inició sesión', 
+            null, 
+            null, 
+            [ // Datos después
+                'username' => Auth::user()->username,
+                'name' => Auth::user()->name . ' ' . Auth::user()->last_name,
+                'email' => Auth::user()->email,
+            ]
+        );
+
+
+        return redirect()->intended(route('utilities-periods', absolute: false));
+    }
+
+    /**
+     * Destroy an authenticated session.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+
+        $this->logActivity(
+            'Login',
+            'Auth', 
+            'Cierre de sesión', 
+            'El usuario cerro sesión', 
+            null, 
+            null, 
+            [ // Datos después
+                'username' => Auth::user()->username,
+                'name' => Auth::user()->name . ' ' . Auth::user()->last_name,
+                'email' => Auth::user()->email,
+            ]
+        );
+        
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect('/');
+    }
+
+
+
+
+:::::::::::PERSONALIZAR VISTA ERRORES:::::::::::::::
+Escribir en temrinal:
+1- php artisan vendor:publish 
+2- seleccionar el numero referente a laravel-errors
+
+*Este paso publicara todo el contenido de las vistas a la carpeta views/errors
+
+
+
+:::::::::::AGREGAR CORREO HOTMAIL:::::::::::::::
+
+
+:::::::::::MODIFICAR MENSAJE DE NOTIFICACION EMAIL:::::::::::::::
+
+primero en laravel en terminal publicar la vista de email a resources/views:
+php artisan vendor:publish --provider="Illuminate\Notifications\NotificationServiceProvider"
+
+
+
+**//para cambiar texto del mensaje notificación de reset contraseña
+1. Crear una Notificación Personalizada
+Puedes crear una nueva notificación utilizando el siguiente comando:
+php artisan make:notification CustomResetPasswordNotification
+
+
+2. personalizar contenido similar a esto
+<?php
+
+namespace App\Notifications;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+
+class CustomResetPasswordNotification extends ResetPasswordNotification
+{
+    use Queueable;
+
+    /**
+     * Create a new notification instance.
+     */
+    public function __construct($token)
+    {
+        parent::__construct($token);
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+public function toMail($notifiable)
+{
+    $url = url(route('password.reset', [
+        'token' => $this->token,
+        'email' => $notifiable->email,
+    ], false));
+
+    return (new MailMessage)
+        ->subject('Restablece tu contraseña')
+        ->line('Recibes este correo porque hemos recibido una solicitud de restablecimiento de contraseña para tu cuenta.')
+        ->action('Restablecer Contraseña', $url)
+        ->line('Este enlace de restablecimiento de contraseña expirará en 60 minutos.')
+        ->line('Si no solicitaste un restablecimiento de contraseña, no se requiere ninguna otra acción.');
+}
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            //
+        ];
+    }
+}
+
+
+3.. Actualizar el Proveedor de Servicios de Autenticación
+En App\Providers\AuthServiceProvider.php, modifica el método boot para registrar tu notificación personalizada:
+
+namespace App\Providers;
+
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use App\Notifications\CustomResetPasswordNotification;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\ServiceProvider;
+
+class AuthServiceProvider extends ServiceProvider
+{
+    public function boot()
+    {
+        $this->registerPolicies();
+
+        // Usar la notificación personalizada para el restablecimiento de contraseña
+        Password::resetUsing(function ($user, $token) {
+            $user->notify(new CustomResetPasswordNotification($token));
+        });
+}
+
+en laravel 11, el paso 3 se puede moficiar por poner esto en el modelo user:
+
+use App\Notifications\CustomResetPasswordNotification;
+
+public function sendPasswordResetNotification($token)
+{
+    $this->notify(new CustomResetPasswordNotification($token));
+}
+
+
+
+
+
+::::::::::NOTIFICACIONES EMAIL:::::::::::::::
+1. primero creamos un Trait "SendsNotificationEmails" en app\Traits
+2. contenido del trait
+<?php
+
+namespace App\Traits;
+
+use App\Jobs\SendEmailJob;
+use Illuminate\Support\Facades\Mail;
+
+trait SendsNotificationEmails
+{
+    public function sendNotificationEmail($subject, $message, $users)
+    {
+        // Agrupar los usuarios en lotes para reducir el número de correos enviados
+        $users->chunk(10)->each(function ($userChunk) use ($subject, $message) {
+            dispatch(new SendEmailJob($userChunk, $subject, $message));
+        });
+    }
+}
+
+3. Creamos ahora un Job, para evitar saturacion de correos y asignar enviar un solo correo por bloques(usuarios copiados)
+Creamos "SendEmailJob" en carpeta App\Jobs, contenido:
+
+<?php
+namespace App\Jobs;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Mail;
+
+class SendEmailJob
+{
+    use Queueable;
+
+    protected $userChunk;
+    protected $subject;
+    protected $message;
+
+    public function __construct($userChunk, $subject, $message)
+    {
+        $this->userChunk = $userChunk;
+        $this->subject = $subject;
+        $this->message = $message;
+    }
+
+    public function handle()
+    {
+        foreach ($this->userChunk as $user) {
+            Mail::send('emails.info', ['introLines' => [$this->message]], function ($mail) use ($user) {
+                $mail->to($user->email)
+                     ->subject($this->subject);
+            });
+        }
+    }
+}
+
+4. Ahora en cualquier Controller en el que se quiera hacer uso del trait invocarlo de la siguiente manera:
+use App\Traits\SendsNotificationEmails;
+
+class MainController extends Controller implements HasMiddleware
+{
+    use SendsNotificationEmails;
+
+    //metodos...
+}
+
+
+5. Para finalizar utilizando el siguiente bloque podemos implementarlo en cualquier metodo del controlador y enviara un correo. las variables $users,$message$subject puedens ser personalizados.
+Nota: En este ejemplo se coloco el bloque que envia notificacion de correo dentro de un metodo
+
+
+    private function sendNotification($date)
+    {
+        $subject = 'Utilities | Periodo creado';
+        $message = 'El usuario ' . Auth::user()->name . ' ' . Auth::user()->last_name . ' abrió un nuevo periodo, ' . ucfirst($date) . '. Ya se pueden capturar datos en este panel.';
+        $users = User::whereNotNull('email')->get();
+        try {
+            $this->sendNotificationEmail($subject, $message, $users);
+        } catch (\Exception $e) {
+            // Registrar un error en los logs si falla el envío de correos
+            Log::error('Error al enviar notificación por correo: ' . $e->getMessage());
+            // Continuar con el proceso sin interrumpir la ejecución
+        }
+    }
+
+
+
+
+
+*NO OLVIDA HACER QUE LAS DIRECCION DE ERRORES, REGRESENA UNA VISTA POR DEFECTO Y NO A LA DE UTILITIES.
+cuando se loguea o hace logout validar que redirija  ala vista por default
+
+
+
+
+
+ESTADOS
+
+//modulo periodos (Index)
+
+1 - Sin capturar: Período mensual aún no ha comenzado o no se ha abierto para la captura de consumo de medidores. No hay registros disponibles para este período, o la fecha de captura mensual aún no ha comenzado.
+
+2 - En curso: Período actual o períodos anteriores están abiertos para la captura de consumo de medidores. Esto significa que se puede ingresar información sobre el consumo de recibos para el período en cuestión.
+
+3 - Capturado: Período ha sido capturado exitosamente. La información sobre el consumo de medidores para este período ha sido registrada y procesada correctamente, estando lista para su uso o análisis posterior.
+
+
+//modulo logimports
+
+4 - Por aprobar: El documento o los datos están pendientes de aprobación por parte de un usuario autorizado. Esto significa que alguien debe revisar y tomar una decisión sobre si se acepta o no.
+
+5 - Aprobado: El documento o los datos han sido revisados y aprobados por el usuario responsable. Esto indica que se considera válido y se puede proceder con el siguiente paso en el proceso.
+
+6 - No Aprobado: El documento o los datos no han pasado la revisión y no han sido aprobados. Esto puede deberse a errores, inconsistencias o incumplimientos de los criterios de aprobación establecidos.
+
+7 - Abrió una aclaración: En este estado, el usuario que realiza la revisión ha encontrado algún aspecto que requiere una explicación adicional o una aclaración por parte del usuario que subió el documento o los datos. Esto podría implicar detalles incompletos, datos contradictorios o cualquier otro punto que necesite ser aclarado antes de proceder con la aprobación.
+
+8 - Cancelado: por el usuario: Este estado indica que el usuario que subió el documento o los datos ha cancelado el proceso de aprobación. Puede ser porque decidió retirar el documento o los datos, o porque se dio cuenta de algún error que necesita corregirse antes de volver a enviarlos para su revisión.
+
+
+
+
+MODULO USUARIOS Y ROLES.
+
+
+//Cuando se cree modulo usuarios y roles
+
+*****Finalizacion de modulo logimports************
+Hacer que modulo: logimports  funcione para la autorizacion de usuario departamental y usuario fiananzas.
+
+
+
+***Finalizacion de modulo periodos*************
+Hacer que periodo
+
+        
+
+
+
+
+
