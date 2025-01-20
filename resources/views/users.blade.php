@@ -209,7 +209,7 @@
             </div>
             <!-- Offcanvas to add new user -->
             <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddUser"
-                aria-labelledby="offcanvasAasdasdasdasdasdasdddUserLabel">
+                aria-labelledby="offcanvasAddUserLabel">
                 <div class="offcanvas-header border-bottom">
                     <h6 id="offcanvasAddUserLabel" class="offcanvas-title">Nuevo usuario</h6>
                     <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
