@@ -113,7 +113,7 @@
                                                     </form>
                                                 @endif
                                                 @if ($period->first()->status_id == 3)
-                                                    <form action="{{ route('utilities-bills') }}" method="GET">
+                                                    <form action="{{ route('bills.utilities') }}" method="GET">
                                                         <input type="hidden" name="start_date"
                                                             value="{{ $start_date }}">
                                                         <input type="hidden" name="end_date" value="{{ $end_date }}">
@@ -701,23 +701,40 @@
                                                 <tbody>
                                                     @foreach ($utilities as $idx => $item)
                                                         <tr>
-                                                            <td><b>#{{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}</b></td>
-                                                            <td>{{ $item->residencia }}</td>
-                                                            <td>{{ $item->room }}</td>
-                                                            <td>{{ $item->owner }}</td>
-                                                            <td>{{ $item->ocupacion }}</td>
-                                                            <td>{{ number_format($item->kw, 2) }}</td>
-                                                            <td>{{ number_format($item->agua, 2) }}</td>
-                                                            <td>{{ number_format($item->gas, 2) }}</td>
-                                                            <td>${{ number_format($item->total_kw, 2) }}</td>
-                                                            <td>${{ number_format($item->total_kwfee, 2) }}</td>
-                                                            <td>${{ number_format($item->total_gas, 2) }}</td>
-                                                            <td>${{ number_format($item->total_gasfee, 2) }}</td>
-                                                            <td>${{ number_format($item->total_agua, 2) }}</td>
-                                                            <td>${{ number_format($item->total_sewer, 2) }}</td>
-                                                            <td>${{ number_format($item->subtotal, 2) }}</td>
-                                                            <td>${{ number_format($item->tax, 2) }}</td>
-                                                            <td>${{ number_format($item->total, 2) }}</td>
+                                                            <td id="{{ $item->id }}">
+                                                                <b>#{{ str_pad($idx + 1, 2, '0', STR_PAD_LEFT) }}</b></td>
+                                                            <td id="{{ $item->id }}" column="residencia">
+                                                                {{ $item->residencia }}</td>
+                                                            <td id="{{ $item->id }}" column="room">
+                                                                {{ $item->room }}</td>
+                                                            <td id="{{ $item->id }}" column="owner">
+                                                                {{ $item->owner }}</td>
+                                                            <td id="{{ $item->id }}" column="ocupacion">
+                                                                {{ $item->ocupacion }}</td>
+                                                            <td id="{{ $item->id }}" column="kw">
+                                                                {{ number_format($item->kw, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="agua">
+                                                                {{ number_format($item->agua, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="gas">
+                                                                {{ number_format($item->gas, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total_kw">
+                                                                ${{ number_format($item->total_kw, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total_kwfee">
+                                                                ${{ number_format($item->total_kwfee, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total_gas">
+                                                                ${{ number_format($item->total_gas, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total_gasfee">
+                                                                ${{ number_format($item->total_gasfee, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total_agua">
+                                                                ${{ number_format($item->total_agua, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total_sewer">
+                                                                ${{ number_format($item->total_sewer, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="subtotal">
+                                                                ${{ number_format($item->subtotal, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="tax">
+                                                                ${{ number_format($item->tax, 2) }}</td>
+                                                            <td id="{{ $item->id }}" column="total">
+                                                                ${{ number_format($item->total, 2) }}</td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
@@ -756,6 +773,9 @@
     </div>
 @endsection
 @section('script')
+    <script>
+        var utilitiesupdate = "{{ route('utilities.update') }}";
+    </script>
     <!-- Vendors JS Datatable -->
     <script src="{{ asset('assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js') }}"></script>
     <!-- Vendors JS Modal Tab-->

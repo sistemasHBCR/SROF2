@@ -44,8 +44,9 @@ Route::middleware(['auth', 'RedirectNewPassword', 'MainRole'])->group(function (
     //**MainController::periodos**
     Route::get('/utilities-periods', [MainController::class, 'index'])->name('utilities-periods'); ///VISTA: inicio periodos de captura
     Route::get('/viewperiod', [MainController::class, 'viewperiod'])->name('viewperiod'); //VISTA: modal ver un periodo en especifico
-    Route::post('/create-period-utilities', [MainController::class, 'createperiod'])->name('createperiod.utilities'); //FUNCTION: Crear nuevo periodo Utilitites
-    Route::get('/utilities-bills', [MainController::class, 'utilities_bills'])->name('utilities-bills'); //VISTA: modal ver un periodo en especifico
+    Route::patch('/updata-utilities', [MainController::class, 'updateUtilities'])->name('utilities.update');
+    Route::post('/create-period-utilities', [MainController::class, 'createPeriod'])->name('createperiod.utilities'); //FUNCTION: Crear nuevo periodo Utilitites
+    Route::get('/bills-utilities', [MainController::class, 'billsUtilities'])->name('bills.utilities'); //VISTA: modal ver un periodo en especifico
 
     //**ImportController:: Importaciones utilities** 
     Route::get('/selectimport', [ImportController::class, 'selectimport'])->name('selectimport'); //VISTA:  importar plantilla excel

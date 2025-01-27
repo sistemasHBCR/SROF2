@@ -28,98 +28,99 @@ $(document).ready(function () {
         }]
     });
 
-    /**
-     * DATATABLE UTILITIES
-     */
     var table = $('#tb-data').DataTable({
-        paging: true, // Habilita la paginación
-        ordering: true, // Habilita la ordenación
-        searching: true, // Habilita el cuadro de búsqueda
-        lengthChange: true, // Muestra el selector de tamaño de página
-        pageLength: 50, // Tamaño de página predeterminado
-        buttons: ['pageLength', 'colvis'], // Botones adicionales
+        paging: true,
+        ordering: true,
+        searching: true,
+        lengthChange: true,
+        pageLength: 50,
+        buttons: ['pageLength', 'colvis'],
         language: {
             paginate: {
-                next: '<i class="fas fa-chevron-right"></i>', // Icono personalizado para siguiente
-                previous: '<i class="fas fa-chevron-left"></i>' // Icono personalizado para anterior
+                next: '<i class="fas fa-chevron-right"></i>',
+                previous: '<i class="fas fa-chevron-left"></i>'
             }
         },
         order: [
-            [0, 'asc'] // Ordenar por la primera columna de forma ascendente
+            [0, 'asc']
         ],
     });
-
-    var editingCell = null; // Variable para almacenar la celda actualmente en edición
-    var previousValue = null; // Almacenar el valor anterior para restaurarlo en caso de cancelación
-
-    // Lista de columnas editables
+    
+    var editingCell = null;
+    var previousValue = null;
+    var registroId = null;
+    var columnaName = null;
     var editableColumns = [2, 3, 4];
-
+    
     $('#tb-data tbody').on('dblclick', 'td', function () {
-        // Verifica si la columna es editable
         if (!editableColumns.includes($(this).index())) return;
-
-        $(this).removeClass('editing'); // Eliminar la clase para no editar
-        var cell = table.cell(this); // Obtener la celda seleccionada
-        var currentValue = cell.data(); // Valor actual de la celda
-
-        // Si la celda ya está siendo editada, no hacer nada
-        if ($(this).hasClass('editing')) return;
-
-        // Si hay una celda en edición, cancélala y restaura su valor original
+    
+        var cell = table.cell(this);
+        var currentValue = cell.data();
+    
         if (editingCell !== null && editingCell !== this) {
             var previousCell = $(editingCell);
-            // Restablecer la celda anterior a su valor original
             previousCell.html(previousValue).removeClass('editing');
         }
-
-        // Marcar la celda como en edición
-        $(this).addClass('editing');
-        editingCell = this; // Actualizar la celda en edición
-        previousValue = currentValue; // Guardar el valor original de la celda
-
-        // Crear un campo de entrada para la edición
+    
+        editingCell = this;
+        previousValue = currentValue;
+        registroId = $(this).attr('id');
+        columnaName = $(this).attr('column');
+    
         var input = $('<input>', {
             type: 'text',
             value: currentValue,
             class: 'form-control form-control-sm'
         });
-
-        // Crear los botones de Cancelar y Aplicar
+    
         var cancelButton = $('<button>', {
             text: 'Cancelar',
             class: 'btn btn-danger btn-sm ml-2',
             click: function () {
-                // Restablecer el valor original
-                $(this).parent().html(previousValue);
-                editingCell = null; // Limpiar la celda en edición
+                $(editingCell).html(previousValue);
+                editingCell = null;
             }
         });
-
+    
         var applyButton = $('<button>', {
             text: 'Aplicar',
             class: 'btn btn-success btn-sm ml-2',
             click: function () {
-                var newValue = input.val(); // Obtener el valor editado
-                cell.data(newValue).draw(); // Actualizar la celda en la tabla
-                editingCell = null; // Limpiar la celda en edición
+                var newValue = input.val();
+                $.ajax({
+                    url: utilitiesupdate,
+                    type: 'PATCH',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content'),
+                        id: registroId,
+                        columna: columnaName,
+                        newValue: newValue
+                    },
+                    success: function (response) {
+                        cell.data(newValue).draw();
+                        editingCell = null;
+                    },
+                    error: function (xhr, status, error) {
+                        $(editingCell).html(previousValue);
+                        editingCell = null;
+                        alert('Error al guardar los cambios. Los datos se revertiran. : ' + error );
+                    }
+                });
             }
         });
-
-        // Reemplazar la celda con el campo de entrada y botones
+    
         $(this).html(input).append(cancelButton).append(applyButton);
-
-        // Si el usuario presiona "Enter", guarda la edición automáticamente
+    
         input.on('keydown', function (e) {
-            if (e.which == 13) { // Si se presiona "Enter"
+            if (e.which == 13) {
                 var newValue = input.val();
-                cell.data(newValue).draw(); // Actualiza la celda
-                editingCell = null; // Limpiar la celda en edición
+                cell.data(newValue).draw();
+                editingCell = null;
             }
         });
     });
-
-    // Aplicar las clases de cursor al cargar la tabla
+    
     $('#tb-data tbody td').each(function () {
         if (editableColumns.includes($(this).index())) {
             $(this).addClass('editable');
@@ -127,6 +128,7 @@ $(document).ready(function () {
             $(this).addClass('non-editable');
         }
     });
+
     /**
     // Card Toggle fullscreen
     // --------------------------------------------------------------------

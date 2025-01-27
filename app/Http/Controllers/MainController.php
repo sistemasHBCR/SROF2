@@ -156,6 +156,21 @@ class MainController extends Controller implements HasMiddleware
         }
     }
 
+    public function updateUtilities(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:utilities,id',
+            'columna' => 'required|string',
+            'newValue' => 'required',
+        ]);
+
+        $utility = utilities::findOrFail($validated['id']);
+        $utility->{$validated['columna']} = $validated['newValue'];
+        $utility->save();
+
+        return response()->json(['message' => 'Registro actualizado correctamente']);
+    }
+
     //**CREAR O ACTUALIZAR UN PERIODO UTILITIES DESDE EL INDEX***/
     public function createPeriod(Request $request)
     {
@@ -286,7 +301,7 @@ class MainController extends Controller implements HasMiddleware
     }
 
     //**Recibos Utilities***/
-    public function utilities_bills(Request $request)
+    public function billsUtilities(Request $request)
     {
         $start_date = Carbon::parse($request->start_date);
         $end_date = Carbon::parse($request->end_date);

@@ -50,7 +50,7 @@
                                     </form>
                                 @endif
                                 @if ($period->first()->status_id == 3)
-                                    <form action="{{ route('utilities-bills') }}" method="GET">
+                                    <form action="{{ route('bills.utilities') }}" method="GET">
                                         <input type="hidden" name="start_date" value="{{ $start_date }}">
                                         <input type="hidden" name="end_date" value="{{ $end_date }}">
                                         <button type="submit" class="btn btn-outline-info float-end">
