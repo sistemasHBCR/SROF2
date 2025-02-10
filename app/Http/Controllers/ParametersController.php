@@ -15,10 +15,29 @@ use App\Models\period;
 use App\Models\parameters_costs_utilities;
 use App\Models\parameters_res_utilities;
 use App\Models\parameters_tc_utilities;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class ParametersController extends Controller
+class ParametersController extends Controller implements HasMiddleware
 {
 
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(\Spatie\Permission\Middleware\PermissionMiddleware::using(
+                [
+                    'parameters.tc',
+                    'parameters.costs',
+                    'parameters.costresidences',
+                ]
+            ), only: ['index']),
+            new Middleware(\Spatie\Permission\Middleware\PermissionMiddleware::using('parameters.tc.edit'), only: ['save_parameters_tc',]),
+            new Middleware(\Spatie\Permission\Middleware\PermissionMiddleware::using(['parameters.consumptionprice.edit', 'parameters.consumptionvolume.edit']), only: ['save_parameters_costs', 'new_parameters_costs', 'delete_parameters_costs']),
+            new Middleware(\Spatie\Permission\Middleware\PermissionMiddleware::using('parameters.residences.edit'), only: ['save_parameters_res', 'save_parameters_someres']),
+            new Middleware(\Spatie\Permission\Middleware\PermissionMiddleware::using('parameters.transfer'), only: ['duplicateparameters'])
+        ];
+    }
 
     /**
      * Display a listing of the resource.
@@ -101,7 +120,6 @@ class ParametersController extends Controller
 
         return view('parameters', compact('residences', 'services', 'rates', 'months', 'dateNow', 'periods', 'monthsWithParametersGrouped', 'status1',  'status2', 'status3'));
     }
-
 
     public function load_costs_inperiod(Request $request)
     {
@@ -220,7 +238,6 @@ class ParametersController extends Controller
         return response()->json(['datatc' => $qry1, 'data' => $groupedData, 'residences' => $residences, 'infos' => $messages], 201);
     }
 
-
     public function load_costs(Request $request)
     {
         $period = $request->period;
@@ -297,7 +314,6 @@ class ParametersController extends Controller
         // Asegurémonos de devolver los datos como un arreglo de objetos
         return response()->json($data->isEmpty() ? [] : $data, 200); // Si la colección está vacía, devolver un arreglo vacío
     }
-
 
     public function save_parameters_tc(Request $request)
     {
@@ -847,19 +863,19 @@ class ParametersController extends Controller
 
             //revisar en residencia
             $CostId = parameters_costs_utilities::where('period_id', $request->period)
-            ->where('volume_code', 'LIKE', '%' . $request->serviceCode . '%')
-            ->pluck('id')->first();
+                ->where('volume_code', 'LIKE', '%' . $request->serviceCode . '%')
+                ->pluck('id')->first();
 
-    
+
             $formulaUsage = parameters_res_utilities::where('period_id', $request->period)
                 ->where('parameters_cost_id', $CostId)
                 ->join('residences', 'parameters_res_utilities.residence_id', '=', 'residences.id')
                 ->get(['residences.name as name']);
 
- 
+
             if ($formulaUsage->isNotEmpty()) {
                 $usageDetails = $formulaUsage->map(function ($item) {
-                    return 'Residencia: '.$item->name;
+                    return 'Residencia: ' . $item->name;
                 });
                 return response()->json([
                     'error' => 'No se puede eliminar el registro porque está siendo utilizado en las siguientes residencias:',
@@ -1003,51 +1019,49 @@ class ParametersController extends Controller
         $messages = [];
         $consumptionTariffs = [];
         $fixedTariffs = [];
-
+    
         foreach ($residences as $residence) {
             if ($residence->rateid == 1) { // Por consumo
                 $key = "{$residence->servicename}_{$residence->codevolume}";
                 $subkey = "{$residence->ifislower} => \${$residence->ratevaluenew} USD";
-
+    
                 $consumptionTariffs[$key][$subkey] = $consumptionTariffs[$key][$subkey] ?? [
                     'count' => 0,
                     'residences' => []
                 ];
-
+    
                 $consumptionTariffs[$key][$subkey]['count']++;
                 $consumptionTariffs[$key][$subkey]['residences'][] = $residence->residencename;
             } elseif ($residence->rateid == 2) { // Fija
                 $key = "{$residence->fixedrate} USD";
-
+    
                 $fixedTariffs[$key] = $fixedTariffs[$key] ?? [
                     'count' => 0,
                     'residences' => [],
                     'servicename' => $residence->servicename
                 ];
-
+    
                 $fixedTariffs[$key]['count']++;
                 $fixedTariffs[$key]['residences'][] = $residence->residencename;
             }
         }
-
+    
         // Mensajes de tarifas por consumo
-        // Generar los mensajes para tarifas por consumo
         foreach ($consumptionTariffs as $key => $subtariffs) {
             $count = array_sum(array_column($subtariffs, 'count'));
             $residencesList = array_merge(...array_column($subtariffs, 'residences'));
-
+    
             $messages[] = [
                 'message' => "$count residencias tienen la tarifa por consumo $key",
                 'service' => explode('_', $key)[0],
                 'residences' => $residencesList
             ];
-
+    
             foreach ($subtariffs as $subkey => $subtariff) {
-                // Verificar si el subkey está vacío o no tiene valores asignados
                 $minimumConsumption = $subkey === " => \$ USD"
                     ? "no tienen tarifa de consumo mínimo asignado"
                     : "con tarifa mínima: $subkey";
-
+    
                 $messages[] = [
                     'message' => "--- {$subtariff['count']} residencias $minimumConsumption",
                     'service' => explode('_', $key)[0],
@@ -1055,6 +1069,16 @@ class ParametersController extends Controller
                 ];
             }
         }
+    
+        // Mensajes de tarifas fijas
+        foreach ($fixedTariffs as $key => $tariff) {
+            $messages[] = [
+                'message' => "{$tariff['count']} residencias tienen la tarifa fija de $key",
+                'service' => $tariff['servicename'],
+                'residences' => $tariff['residences']
+            ];
+        }
+    
         return $messages;
     }
 
@@ -1122,7 +1146,6 @@ class ParametersController extends Controller
 
 
                 //::::transferir datos res::::
-                // Recorrer los registros del origenperiod
                 foreach ($prev_parametersres as $param) {
                     Log::debug('Procesando parámetro:', ['param' => $param]);
 
@@ -1132,20 +1155,17 @@ class ParametersController extends Controller
                         ->where('service_id', $param->service_id)
                         ->first();
 
-
                     if ($existingRecord) {
-                        // Obtener el id del costo duplicado nuevo, con respecto al origen de donde estamos duplicando.
-                        // Obtendremos primero el volume_code del periodo anterior
-                        $Costorigencode = parameters_costs_utilities::where('id', $existingRecord->parameters_cost_id)
-                            ->pluck('volume_code');
-
+                        // Obtener el volume_code del periodo anterior
+                        $Costorigencode = parameters_costs_utilities::where('id', $param->parameters_cost_id)
+                            ->value('volume_code');
 
                         // Obtenemos el id del periodo duplicado, con respecto al volume_code de la consulta
-                        $Costnewid = parameters_costs_utilities::where('volume_code', $Costorigencode)
+                        $Costnewid = $Costorigencode ? parameters_costs_utilities::where('volume_code', $Costorigencode)
                             ->where('period_id', $request->transperiod)
-                            ->pluck('id');
+                            ->value('id') : null; //obtener el id del costo, sino tiene es null (probablemente tarifa fija)
 
-                        // Actualizar el registro
+                        // Actualizar el registro con el nuevo id o null
                         $existingRecord->update([
                             'rate_id' => $param->rate_id,
                             'fixedrate_value' => $param->fixedrate_value,
@@ -1154,11 +1174,14 @@ class ParametersController extends Controller
                             'consumptionlower_is' => $param->consumptionlower_is,
                             'flaterate_consumption_islower' => $param->flaterate_consumption_islower,
                         ]);
+
+                        if (is_null($Costnewid)) {
+                            Log::warning('No se encontró un volume_code para el parámetro, parameters_cost_id establecido como NULL:', ['param' => $param]);
+                        }
                     } else {
                         Log::warning('No se encontró un registro para el parámetro:', ['param' => $param]);
                     }
                 }
-
 
 
                 // Actualizamos periodo como registrado

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use App\Notifications\CustomResetPasswordNotification;
 use Illuminate\Support\Facades\Password;
-
+use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,5 +26,6 @@ class AppServiceProvider extends ServiceProvider
     {
         View::share('baseUrl', config('app.base_url'));
         date_default_timezone_set('America/Mazatlan');
+        
     }
 }

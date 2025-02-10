@@ -65,7 +65,7 @@ var year_transperiod = $("#year_transperiod");
 selectlistresidences.selectpicker();
 
 // Mask numeral
-function applyMask() {formulaUsage
+function applyMask() {
     $('.mask-money').maskMoney();
 }
 // Función para habilitar el input
@@ -265,11 +265,19 @@ function generatePaginationItem(currentCard, serviceId) {
     // Paso 9: Marcar el nuevo item como 'active'
     //  currentCard.find('.pagination .page-item').last().addClass('active');
 }
-// Funcion generar cards costo - servicios
+
+/**
+  * Esta función genera el HTML para los servicios de costos.
+  * Verifica los permisos del usuario y renderiza u oculta ciertos elementos HTML en función de esos permisos.
+  * 
+  * @param {Object} services - Un objeto que contiene los servicios y sus detalles.
+  * @returns {string} - El HTML generado.
+  */
 function htmlCardServices(services) {
     let html = '';
     html += '<div class="row mb-3">';
 
+    // Itera sobre cada servicio en el objeto services
     Object.keys(services).forEach((key, index) => {
         var serviceArray = services[key];
         var numOfPaginationItems = serviceArray.length;
@@ -288,82 +296,73 @@ function htmlCardServices(services) {
                                     <span class="fw-medium">${item.servicename}</span>
                                     <span class="badge bg-label-${item.serviceclass}"><i class="${item.serviceicon}"></i></span>
                                 </span>
-                                <span class="custom-option-body">
-                                    <label><small class="text-light fw-medium">Volumen / <code class="code-service" data-code="${item.servicecode}">codigo: ${item.servicecode}1</code></small></label>
-                                    <div class="input-group input-group-sm mb-2">
-                                        <span class="input-group-text"><i class='bx bxs-component'></i></span>
-                                        <input type="text" value="${item.volume}" data-code="${item.servicecode}1" data-service="${item.serviceid}" class="form-control calculate-volum mask-money" step="0.01" min="1" id="${item.servicecode}1" placeholder="Parametro del servicio" disabled>
-                                        <button class="btn btn-outline-secondary edit-volume-btn" type="submit"><i class='bx bx-edit'></i></button>
-                                    </div>
-                                    <label><small class="text-light fw-medium">Costo</small></label>
-                                    <div class="input-group input-group-sm mb-2">
-                                        <span class="input-group-text"><i class='bx bx-dollar-circle'></i></span>
-                                        <input type="text" value="${item.cost_formula}" data-code="${item.servicecode}1" data-service="${item.serviceid}" class="form-control calculate-cost" placeholder="Calculo del costo" disabled>
-                                        <button class="btn btn-outline-secondary edit-calculate-btn" type="button"><i class='bx bx-edit'></i></button>
-                                    </div>
-                                    <div class="text-center">
-                                        <h5 class="result-cost card-title mb-0 me-2">$${formatNumber(item.cost)}</h5>
-                                        <small class="text-muted">Costo x volumen</small>
-                                    </div>
-                                    <span class="my-3 border-bottom d-block"></span>
-                                    <span class="d-flex justify-content-between">
-                                        <div>
-                                            <a href="javascript:void(0)"><i class="bx bx-trash sm delete-cost"></i></a>
-                                            <a class="me-2" href="javascript:void(0)"> <i class="bx bx-plus sm add-cost"></i></a>
-                                        </div>
-                                        <nav aria-label="Page navigation">
-                                            <ul class="pagination pagination-sm mb-0">`;
-            //****START Generar los elementos de paginación****
-            /*if (numOfPaginationItems >= 4) {
-                html +=
-                    `<li class="page-item prev">
-                                                <a class="page-link" href="javascript:void(0);">
-                                                    <i class="tf-icon bx bx-chevrons-left"></i>
-                                                </a>
-                                            </li>`;
-            }*/
+                                <span class="custom-option-body">`;
+
+            html += `<label><small class="text-light fw-medium">Volumen / <code class="code-service" data-code="${item.servicecode}">codigo: ${item.servicecode}1</code></small></label>
+                         <div class="input-group input-group-sm mb-2">
+                             <span class="input-group-text"><i class='bx bxs-component'></i></span>
+                             <input type="text" value="${item.volume}" data-code="${item.servicecode}1" data-service="${item.serviceid}" class="form-control calculate-volum mask-money" step="0.01" min="1" id="${item.servicecode}1" placeholder="Parametro del servicio" disabled>`;
+            // Verifica si el usuario tiene el permiso 'parameters.consumptionvolume.edit'
+            if (hasPermission_consumptionvolumeedit) {
+                html += `<button class="btn btn-outline-secondary edit-volume-btn" type="submit"><i class='bx bx-edit'></i></button>`;
+            }
+            html += `</div>`;
+            // Verifica si el usuario tiene el permiso 'parameters.consumptionprice'
+            html += `<label><small class="text-light fw-medium">Costo</small></label>
+                         <div class="input-group input-group-sm mb-2">
+                             <span class="input-group-text"><i class='bx bx-dollar-circle'></i></span>
+                             <input type="text" value="${item.cost_formula}" data-code="${item.servicecode}1" data-service="${item.serviceid}" class="form-control calculate-cost" placeholder="Calculo del costo" disabled>`;
+            // Verifica si el usuario tiene el permiso 'parameters.consumptionprice.edit'
+            if (hasPermission_consumptionpriceedit) {
+                html += `<button class="btn btn-outline-secondary edit-calculate-btn" type="button"><i class='bx bx-edit'></i></button>`;
+            }
+            html += `</div>
+                         <div class="text-center">
+                             <h5 class="result-cost card-title mb-0 me-2">$${formatNumber(item.cost)}</h5>
+                             <small class="text-muted">Costo x volumen</small>
+                         </div>`;
+            html += `<span class="my-3 border-bottom d-block"></span>
+                     <span class="d-flex justify-content-between">
+                         <div>
+                             <a href="javascript:void(0)"><i class="bx bx-trash sm delete-cost"></i></a>
+                             <a class="me-2" href="javascript:void(0)"> <i class="bx bx-plus sm add-cost"></i></a>
+                         </div>
+                         <nav aria-label="Page navigation">
+                             <ul class="pagination pagination-sm mb-0">`;
+
+            // Genera los elementos de paginación
             rows.forEach((row, rowIndex) => {
-                // Asignación dinámica de los atributos data-*
                 let activeClass = rowIndex === 0 ? 'active' : '';
                 let dataServiceId = serviceArray[rowIndex].serviceid;
                 let dataServiceCode = `${serviceArray[rowIndex].servicecode}${row}`;
 
-                // Insertar un elemento de paginación con los atributos correspondientes
                 html += `<li class="page-item ${activeClass}" data-page="${row}">
-                                            <a class="page-link"  
-                                            data-serviceid="${dataServiceId}"
-                                            data-servicecode="${dataServiceCode}"
-                                            href="javascript:void(0);">${row}</a>
-                                        </li>`;
+                            <a class="page-link"  
+                            data-serviceid="${dataServiceId}"
+                            data-servicecode="${dataServiceCode}"
+                            href="javascript:void(0);">${row}</a>
+                         </li>`;
             });
-            /*if (numOfPaginationItems >= 4) {
-                html +=
-                    `<li class="page-item next">
-                        <a class="page-link" href="javascript:void(0);">
-                            <i class="tf-icon bx bx-chevrons-right"></i>
-                        </a>
-                    </li>`;
-            }*/
-            //****END Generar los elementos de paginación****
-            html +=
-                `</ul>
-                                                            </nav>
-                                                        </span>
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        </div>`;
+
+            html += `</ul>
+                     </nav>
+                     </span>
+                     </span>
+                     </label>
+                     </div>
+                     </div>`;
+
             // Cada dos elementos, cerrar el div de fila y abrir uno nuevo
             if (index % 2 === 1 || index === Object.keys(services).length - 1) {
-                html += '</div>'; // Cierra el contenedor de cards
+                html += '</div>';
                 if (index < Object.keys(services).length - 1) {
-                    html += '<div class="row mb-3">'; // Abre un nuevo contenedor de cards
+                    html += '<div class="row mb-3">';
                 }
             }
         }
     });
 
-    html += '</div>'; // Cierra el contenedor principal
+    html += '</div>';
     return html;
 }
 
@@ -1182,22 +1181,9 @@ enableCondition.change(function () {
     }
 });
 
-//***COMPORTAMIENTO CARDS CONSUMOS - COSTOS - SERVICIOS***/
-// --------------------------------------------------------------------
-//contorno card al click radio
-cardsCosts.on('click', function () {
-    $cardsCosts.removeClass('checked');
-    $(this).addClass('checked');
-});
-
-//paginazion por card
-$(document).on('click', '.pagination .page-item', function () {
-    var $pagination = $(this).closest('.pagination');
-    $pagination.find('.page-item').removeClass('active');
-    $(this).addClass('active');
-});
 
 //***SECCION N PARAMETROS GENERALES TC/TAX***/
+// --------------------------------------------------------------------
 // Evento para el botón de editar TC
 editTcBtn.click(function () {
     var input = $(this).siblings('input');
@@ -1216,8 +1202,10 @@ editTcBtn.click(function () {
                 disableInput(input, button, 'in-progress');
             },
             success: function (response) {
-                // Llama a la función para recalcular todos los resultados
-                recalculateAllResults(period);
+                //ejecutar si tiene permiso
+                if (hasPermission_costs) {
+                    recalculateAllResults(period); // Llama a la función para recalcular todos los resultados en seccion 2.
+                }
                 disableInput(input, button, 'success');
                 toastr.success(response.message, { progressBar: true, showDuration: 1000, hideDuration: 1000 });
                 $('div[data-period="' + period + '"] .parameterstatus').text(res.statusparameter.message);
@@ -1247,8 +1235,10 @@ editTaxBtn.click(function () {
                 disableInput(input, button, 'in-progress');
             },
             success: function (res) {
-                // Llama a la función para recalcular todos los resultados
-                recalculateAllResults(period);
+                //ejecutar si tiene permiso
+                if (hasPermission_costs) {
+                    recalculateAllResults(period); // Llama a la función para recalcular todos los resultados en seccion 2.
+                }
                 disableInput(input, button, 'success');
                 toastr.success(res.message, { progressBar: true, showDuration: 1000, hideDuration: 1000 });
                 $('div[data-period="' + period + '"] .parameterstatus').text(res.statusparameter.message);
@@ -1260,6 +1250,23 @@ editTaxBtn.click(function () {
         });
     }
 });
+
+
+//***COMPORTAMIENTO CARDS CONSUMOS - COSTOS - SERVICIOS***/
+// --------------------------------------------------------------------
+//contorno card al click radio
+cardsCosts.on('click', function () {
+    $cardsCosts.removeClass('checked');
+    $(this).addClass('checked');
+});
+
+//paginazion por card
+$(document).on('click', '.pagination .page-item', function () {
+    var $pagination = $(this).closest('.pagination');
+    $pagination.find('.page-item').removeClass('active');
+    $(this).addClass('active');
+});
+
 
 //***SECCION SERVICIOS: CALCULO PRECIO X CONSUMO: VOLUMEN/COSTO***/
 // Evento dinamico para mostrar/ocultar datos de la tabla segun el serivicio elejido en los cards

@@ -16,6 +16,12 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/@form-validation/umd/styles/index.min.css') }}" />
+
+    <style>
+        .dtrg-group {
+            background-color: #e3e8ee !important;
+        }
+    </style>
 @endsection
 
 @section('contenido')
@@ -154,6 +160,7 @@
                     </div>
                 </div>
             @endforeach
+            @can(['roles.create'])
             <div class="col-xl-4 col-lg-6 col-md-6">
                 <div class="card h-100">
                     <div class="row h-100">
@@ -176,6 +183,7 @@
                     </div>
                 </div>
             </div>
+            @endcan
             <div class="col-12">
                 <!-- Permission Table -->
                 <div class="card">
@@ -202,17 +210,15 @@
                             class="datatables-permissions table border-top datatables-products table">
                             <thead class="border-top">
                                 <tr>
-                                    <th>#</th>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
-                                    <th>Asignado a</th>
                                     <th>Modulo</th>
+                                    <th>Roles</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($permissions as $idx => $permission)
                                     <tr>
-                                        <td>{{ $idx + 1 }}</td>
                                         <td>{{ $permission->name }}</td>
                                         <td>{{ $permission->description }}</td>
                                         <td>{{ $permission->module }}</td>

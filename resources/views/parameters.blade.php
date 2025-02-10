@@ -44,9 +44,10 @@
                 <span class="text-muted fw-light"></span> Parametros Utilities
             </h4>
             <!-- Botón alineado a la derecha -->
-            <button class="btn btn-white" id="duplicate" style="display: none;"><i class='bx bxs-duplicate me-1'></i>
-                Duplicar</button>
-
+            @canany(['parameters.transfer'])
+                <button class="btn btn-white" id="duplicate" style="display: none;"><i class='bx bxs-duplicate me-1'></i>
+                    Duplicar</button>
+            @endcanany
         </div>
 
         <div class="row g-4">
@@ -142,73 +143,84 @@
                                             </div>
                                             <div class="content-dataperiod col-lg-12 mx-auto sr-only">
                                                 <!-- 1. General -->
-                                                <h5 class="mb-4">1. Parametros generales</h5>
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <label><small class="text-light fw-medium">Tipo de cambio /
-                                                                <code>codigo: tc</code></small></label>
-                                                        <div class="input-group input-group-sm mb-2">
-                                                            <span class="input-group-text"><i
-                                                                    class='bx bx-money-withdraw'></i></span>
-                                                            <input type="text" id="tc" name="tc"
-                                                                class="form-control mask-money"
-                                                                placeholder="Ingrese el tipo de cambio" required disabled>
-                                                            <button class="btn btn-outline-secondary edit-tc-btn"
-                                                                type="button"><i class='bx bx-edit'></i></button>
+                                                @canany(['parameters.tc'])
+                                                    <h5 class="mb-4">1. Parametros generales</h5>
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <label><small class="text-light fw-medium">Tipo de cambio /
+                                                                    <code>codigo: tc</code></small></label>
+                                                            <div class="input-group input-group-sm mb-2">
+                                                                <span class="input-group-text"><i
+                                                                        class='bx bx-money-withdraw'></i></span>
+                                                                <input type="text" id="tc" name="tc"
+                                                                    class="form-control mask-money"
+                                                                    placeholder="Ingrese el tipo de cambio" required disabled>
+                                                                @canany(['parameters.tc.edit'])
+                                                                    <button class="btn btn-outline-secondary edit-tc-btn"
+                                                                        type="button"><i class='bx bx-edit'></i></button>
+                                                                @endcanany
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label><small class="text-light fw-medium">TAX (%) /
-                                                                <code>codigo: tax</code></small></label>
-                                                        <div class="input-group input-group-sm mb-2">
-                                                            <span class="input-group-text"><i
-                                                                    class='bx bxs-discount'></i></span>
-                                                            <input type="text" id="tax" name="tax"
-                                                                class="form-control mask-money" value=""
-                                                                placeholder="Ingrese el TAX: valor sera tomado como porcentaje "
-                                                                required disabled>
-                                                            <button class="btn btn-outline-secondary edit-tax-btn"
-                                                                type="button"><i class='bx bx-edit'></i></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <hr>
-                                                <!-- 2. Utilities -->
-                                                <h5 class="my-4">2. Alta de tarifas por consumo</h5>
-                                                <div id="CardsServices">
-                                                </div>
-                                                <hr>
-                                                <!-- 3. Administrar reglas de calculo -->
-                                                <h5 class="my-4">3. Tarifas por residencia</h5>
-                                                <div class="alert d-flex align-items-center bg-label-secondary mb-2"
-                                                    role="alert">
-                                                    <ul id="residencesTariffInfo">
-
-                                                    </ul>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <div class="table-responsive">
-                                                            <div class="card-datatable table-responsive pt-0">
-                                                                <table id="tb-residence" class="table table-sm ">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Residencia</th>
-                                                                            <th>Servicio</th>
-                                                                            <th>Estado</th>
-                                                                            <th>Tarifa</th>
-                                                                            <th>Si consumo es menor a</th>
-                                                                            <th></th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                    </tbody>
-                                                                </table>
+                                                        <div class="col-md-6">
+                                                            <label><small class="text-light fw-medium">TAX (%) /
+                                                                    <code>codigo: tax</code></small></label>
+                                                            <div class="input-group input-group-sm mb-2">
+                                                                <span class="input-group-text"><i
+                                                                        class='bx bxs-discount'></i></span>
+                                                                <input type="text" id="tax" name="tax"
+                                                                    class="form-control mask-money" value=""
+                                                                    placeholder="Ingrese el TAX: valor sera tomado como porcentaje "
+                                                                    required disabled>
+                                                                @canany(['parameters.tc.edit'])
+                                                                    <button class="btn btn-outline-secondary edit-tax-btn"
+                                                                        type="button"><i class='bx bx-edit'></i></button>
+                                                                @endcanany
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                    <hr>
+                                                @endcanany
+                                                <!-- 2. Utilities -->
+                                                @canany(['parameters.costs'])
+                                                    <h5 class="my-4">2. Alta de tarifas por consumo</h5>
+                                                    <div id="CardsServices">
+                                                    </div>
+                                                    <hr>
+                                                @endcanany
+
+                                                @canany(['parameters.residences'])
+                                                    <!-- 3. Administrar reglas de calculo -->
+                                                    <h5 class="my-4">3. Tarifas por residencia</h5>
+                                                    <div class="alert d-flex align-items-center bg-label-secondary mb-2"
+                                                        role="alert">
+                                                        <ul id="residencesTariffInfo">
+
+                                                        </ul>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="table-responsive">
+                                                                <div class="card-datatable table-responsive pt-0">
+                                                                    <table id="tb-residence" class="table table-sm ">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Residencia</th>
+                                                                                <th>Servicio</th>
+                                                                                <th>Estado</th>
+                                                                                <th>Tarifa</th>
+                                                                                <th>Si consumo es menor a</th>
+                                                                                <th></th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endcanany
                                             </div>
                                         </div>
                                     </div>
@@ -235,7 +247,7 @@
                         <div class="col-12 mb-3">
                             <h6 class="fw-normal">1. Tipo de tarifa</h6>
                             <hr class="mt-0">
-                            <select class="form-select" id="type_rate">
+                            <select class="form-select" id="type_rate" @cannot('parameters.residences.edit') disabled @endcannot>
                                 @foreach ($rates as $idx => $rate)
                                     <option value="{{ $rate->id }}">{{ $rate->name }}</option>
                                 @endforeach
@@ -263,7 +275,7 @@
                             <div class="input-group contentfixedrate_value">
                                 <span class="input-group-text">$</span>
                                 <input type="text" class="form-control input_value mask-money"
-                                    placeholder="Ingrese costo" id="fixedrate_value">
+                                    placeholder="Ingrese costo" id="fixedrate_value" @cannot('parameters.residences.edit') disabled @endcannot>
                                 <span class="input-group-text">USD</span>
                             </div>
                         </div>
@@ -274,17 +286,17 @@
                         <div class="col-6 mb-2">
                             <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" value="" id="enable_condition"
-                                    checked>
+                                    checked @cannot('parameters.residences.edit') disabled @endcannot>
                                 <label for="condition_consumption" class="form-label txt_condition_consumption">SI CONSUMO
                                     ES IGUAL Y MENOR A</label>
                             </div>
                             <input type="text" id="condition_consumption" value=""
-                                class="form-control mask-money" placeholder="" />
+                                class="form-control mask-money" placeholder="" @cannot('parameters.residences.edit') disabled @endcannot/>
                         </div>
                         <div class="col-6 mt-4">
                             <label for="condition_value" class="form-label txt_condition_value">TARIFA FIJA DE ($)
                                 USD</label>
-                            <input type="text" id="condition_value" class="form-control mask-money" value="" />
+                            <input type="text" id="condition_value" class="form-control mask-money" value="" @cannot('parameters.residences.edit') disabled @endcannot/>
                         </div>
                     </div>
                     <div class="row g-2 content-listresidences">
@@ -304,8 +316,10 @@
                 </div>
 
                 <div class="modal-footer">
+                    @canany(['parameters.residences.edit'])
                     <button type="submit" id="btnsavegeneralres" class="update btn btn-primary">Guardar</button>
                     <button type="submit" id="btnsaveinresidence" class="update btn btn-primary">Guardar</button>
+                    @endcanany
                 </div>
             </form>
         </div>
@@ -458,6 +472,9 @@
         var load_databyresidence = "{{ route('load_databyresidence') }}";
         var load_resultcosts = "{{ route('load_resultcosts') }}";
         var duplicateparameters = "{{ route('duplicateparameters') }}";
+        var hasPermission_costs = @json(auth()->user()->can('parameters.costs'));
+        var hasPermission_consumptionpriceedit = @json(auth()->user()->can('parameters.consumptionprice.edit'));
+        var hasPermission_consumptionvolumeedit = @json(auth()->user()->can('parameters.consumptionvolume.edit'));
     </script>
 
     <!-- JS Select2 Multiple -->

@@ -90,7 +90,7 @@
                                                     ${{ number_format($row->total_sewer, 2, '.', ',') }}</td>
                                             </tr>
                                             <tr class="tm_table_baseline">
-                                                <td class="tm_width_7 tm_primary_color">Propone Gas</td>
+                                                <td class="tm_width_7 tm_primary_color">Propane</td>
                                                 <td class="tm_width_2">{{ number_format($row->gas, 2, '.', ',') }} M3
                                                 </td>
                                                 <td class="tm_width_2 tm_text_right">

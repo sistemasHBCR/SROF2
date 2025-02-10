@@ -235,9 +235,8 @@ $(document).ready(function () {
   let sameuser = 0;
   let actualrol;
   $(document).on('click', 'button.data-user', function () {
-    //limpiar campos si cambiamos entre formulario nuevo usuario y formulario edicion
+    limpiar();
     if (reset == "crear") {
-      limpiar();
       reset = "editar";
     }
     var id = $(this).attr('id');
@@ -260,6 +259,17 @@ $(document).ready(function () {
       data: { id: id },
       success: function (response) {
         // Mostrar los datos en el formulario
+        console.log()
+        if (response.authid == response.user[0].id) {
+          $("#contentroles").hide()
+        }
+        else {
+          $("#contentroles").show()
+        }
+        const notifications = response.user[0].notifications;
+        notifications.forEach(notification => {
+          $(`input[name="notifications"][value="${notification.id}"]`).prop('checked', true);
+        });
         $('#offcanvasAddUserLabel').text("Editar usuario " + response.user[0].name + ' ' + response.user[0].last_name);
         $('#userid').val(response.user[0].id);
         $('#name').val(response.user[0].name);
@@ -278,6 +288,13 @@ $(document).ready(function () {
 
   //limpiar modal
   function limpiar() {
+    // Muestra el contenido de la pestaña "Datos Generales" y oculta los demás
+    $('#userTabs .nav-link').removeClass('active');
+    $('#general-tab').addClass('active');
+    $('#userTabsContent .tab-pane').removeClass('show active');
+    $('#general').addClass('show active'); 
+
+    //reset ampos
     $('#name').val("");
     $('#last_name').val("");
     $('#email').val("");
@@ -289,7 +306,7 @@ $(document).ready(function () {
     $('#btnnew').hide();
     $('#change_password').prop('checked', false);
     $('#change_next_login').prop('disabled', true).prop('checked', false);
-
+    $('input[name="notifications"]').prop('checked', false);
   }
 
   //cerrar form
@@ -334,13 +351,18 @@ $(document).ready(function () {
           var roles = $("#roles option:selected").val();
           var change_password = $('#change_password').is(':checked') ? 'Y' : 'N';
           var change_next_login = $('#change_next_login').is(':checked') ? 'Y' : 'N';
+          var notifications = [];
+          $("input:checkbox[name=notifications]:checked").each(function () {
+            notifications.push($(this).val());
+          });
           $.ajax({
             url: './users/' + id,
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             type: 'PUT',
             data: {
               name: name, last_name: last_name, email: email, username: username, roles: roles,
-              password: password, password_confirmation: password_confirmation, change_password, change_next_login
+              notifications: notifications, password: password, password_confirmation: password_confirmation,
+              change_password, change_next_login
             },
             success: function (response) {
               //reset campos passwords
@@ -414,12 +436,20 @@ $(document).ready(function () {
           var password = $('#password').val().trim();
           var password_confirmation = $('#password_confirmation').val().trim();
           var roles = $("#roles option:selected").val();
+          var notifications = [];
+          $('input[name="notifications[]"]:checked').each(function () {
+            notifications.push($(this).val());
+          });
 
           $.ajax({
             url: './users',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             type: 'POST',
-            data: { name: name, last_name: last_name, email: email, username: username, roles: roles, password: password, password_confirmation: password_confirmation },
+            data: {
+              name: name, last_name: last_name, email: email, username: username,
+              notifications: notifications, roles: roles, password: password,
+              password_confirmation: password_confirmation
+            },
             success: function (response) {
 
               var numRows = dt_users.rows().count() + 1;

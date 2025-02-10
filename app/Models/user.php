@@ -70,4 +70,10 @@ class user extends Authenticatable
     {
         return $this->hasMany(Comment::class);
     }
+    
+    public function notifications()
+    {
+        return $this->belongsToMany(Notification::class, 'notification_user', 'user_id', 'notification_id');
+    }
+    
 }

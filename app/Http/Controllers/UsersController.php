@@ -8,6 +8,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use App\Models\notification;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -34,7 +36,8 @@ class UsersController extends Controller implements HasMiddleware
     {
         $roles = Role::all();
         $users = User::with('roles')->get();
-        return view('users', compact('users', 'roles'));
+        $notifications = notification::all();
+        return view('users', compact('users', 'roles', 'notifications'));
     }
 
     /**
@@ -54,7 +57,7 @@ class UsersController extends Controller implements HasMiddleware
         $request->validate([
             'name' => ['required', 'string', 'max:20'],
             'last_name' => ['required', 'string', 'max:20'],
-            'username' => ['required', 'string', 'min:6', 'max:20', 'unique:' . User::class],
+            'username' => ['required', 'string', 'min:5', 'max:20', 'unique:' . User::class],
             'roles' => ['required'],
             'email' => ['nullable', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
@@ -75,10 +78,13 @@ class UsersController extends Controller implements HasMiddleware
             ]);
 
 
-            //actualizar roles a usuario
+            
+            //actualizar relacion a usuario
+            $user->notifications()->sync($request->notifications);
             $user->syncRoles($request->roles);
-            // Recargar la relación 'role' para obtener los datos actualizados
-            $user->load('roles');
+
+            // Recargar datos de las relaciónes 
+            $user->load(['notifications', 'roles']);
 
 
             // Registrar la actividad
@@ -124,13 +130,16 @@ class UsersController extends Controller implements HasMiddleware
      */
     public function edit(string $id)
     {
-
-        $user = User::where('id', '=', $id)->with('roles:name')->get();
+        $authid = Auth::user()->id;
+        $user = User::where('id', '=', $id)
+        ->select('id', 'name', 'last_name', 'email', 'username', 'avatar_class') // Selecciona solo los campos necesarios del usuario
+        ->with(['roles:name', 'notifications:id']) // Selecciona solo los campos necesarios de las relaciones
+        ->get();
 
         if (!$user) {
             return response()->json(['error' => 'Usuario no encontrado'], 404);
         }
-        return response()->json(['user' => $user]);
+        return response()->json(['user' => $user, 'authid' => $authid]);
     }
 
     /**
@@ -142,7 +151,7 @@ class UsersController extends Controller implements HasMiddleware
         $request->validate([
             'name' => ['required', 'string', 'max:20'],
             'last_name' => ['required', 'string', 'max:20'],
-            'username' => ['required', 'string', 'min:6', 'max:20',  Rule::unique('users')->ignore($id)],
+            'username' => ['required', 'string', 'min:5', 'max:20',  Rule::unique('users')->ignore($id)],
             'roles' => ['required'],
             'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'password' => [
@@ -160,7 +169,7 @@ class UsersController extends Controller implements HasMiddleware
         DB::beginTransaction(); // Iniciar una transacción de base de datos
         try {
             // Buscar el usuario por el ID
-            $user = User::with('roles')->findOrFail($id);
+            $user = User::with(['roles','notifications'])->findOrFail($id);
             $before = clone $user;  //capturar modelo antes de actualizar
             // Actualizar los campos con los nuevos valores
             $user->name = $request->name;
@@ -174,10 +183,12 @@ class UsersController extends Controller implements HasMiddleware
             }
             $user->save();
 
-            //actualizar roles a usuario
+            //actualizar relacion a usuario
+            $user->notifications()->sync($request->notifications);
             $user->syncRoles($request->roles);
-            // Recargar la relación 'roles' para obtener los datos actualizados
-            $user->load('roles');
+
+            // Recargar datos de las relaciónes 
+            $user->load(['notifications', 'roles']);
 
 
             // Registrar la actividad

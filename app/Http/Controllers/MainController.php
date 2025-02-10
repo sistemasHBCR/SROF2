@@ -40,7 +40,6 @@ class MainController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
 
-
         $year = $request->input('year');
         $currentYear = now()->year;
         $nextYear = $currentYear + 1;
@@ -210,7 +209,7 @@ class MainController extends Controller implements HasMiddleware
         );
 
         //mandar notificacion
-        $notificacion = 'utilities.openperiod';
+        $notificacion = 'utilities.open';
         $this->sendNotification($notificacion, $datePeriod);
 
         DB::commit();
@@ -286,9 +285,17 @@ class MainController extends Controller implements HasMiddleware
     {
         $subject = 'Utilities | Periodo abierto';
         $message = 'El usuario ' . Auth::user()->name . ' ' . Auth::user()->last_name . ' abrió un nuevo periodo: ' . ucfirst($date) . '. Ya se pueden capturar datos en este panel.';
-        $users = User::whereNotNull('email')->get();
+        $users = User::whereNotNull('email')
+            ->with(['roles', 'notifications'])
+            ->get();
         $filteredUsers = $users->filter(function ($user) {
-            return !$user->hasRole('Suspendido');
+            // Verificar que el usuario no tenga el rol "Suspendido"
+            $hasNoSuspendedRole = !$user->hasRole('Suspendido');
+
+            // Verificar que el usuario tenga la notificación "utilities.open"
+            $hasUtilitiesOpenNotification = $user->notifications->contains('name', 'utilities.open');
+            // Combinar ambas condiciones
+            return $hasNoSuspendedRole && $hasUtilitiesOpenNotification;
         });
 
         try {

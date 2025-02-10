@@ -892,7 +892,6 @@ class ImportController extends Controller implements HasMiddleware
                         ];
                     });
                     Utilities::insert($utilities->toArray());
-
                 } else
                 //plantilla completa
                 {
@@ -921,7 +920,7 @@ class ImportController extends Controller implements HasMiddleware
                 }
 
                 //mandar notificacion
-                $notificacion = 'utilities.closeperiod';
+                $notificacion = 'utilities.close';
                 $this->sendNotification($notificacion, $dateperiod,  $status_import, $import->version);
             }
 
@@ -1262,11 +1261,17 @@ class ImportController extends Controller implements HasMiddleware
             // Definir variables predeterminadas
             $subject = '';
             $message = '';
-            $users = User::whereNotNull('email')->get();
-            $filteredUsers = $users->filter(function ($user) {
-                return !$user->hasRole('Suspendido');
+            $users = User::whereNotNull('email')
+                ->with(['roles', 'notifications'])
+                ->get();
+            $filteredUsers = $users->filter(function ($user) use ($notificacion){
+                // Verificar que el usuario no tenga el rol "Suspendido"
+                $hasNoSuspendedRole = !$user->hasRole('Suspendido');
+                //filtrar si tiene asignado notificación
+                $hasUtilitiesOpenNotification = $user->notifications->contains('name', $notificacion);
+                // Combinar ambas condiciones
+                return $hasNoSuspendedRole && $hasUtilitiesOpenNotification;
             });
-
 
             //contenido email según el tipo de notificación
             switch ($notificacion) {
@@ -1309,7 +1314,7 @@ class ImportController extends Controller implements HasMiddleware
                     );
                     break;
 
-                case 'utilities.closeperiod':
+                case 'utilities.close':
                     $subject = 'Utilities | Periodo cerrado';
                     $message = sprintf(
                         'Se han aprobado entre departamentos datos del periodo %s. Se cierra el mes y se habilita la descarga de recibos.',

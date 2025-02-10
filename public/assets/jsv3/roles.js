@@ -14,7 +14,7 @@ $(document).ready(function () {
     info: true,
     pageLength: 25,
 
-    
+
     dom:
       '<"row mx-2"' +
       '<"col-md-2"<"me-3"l>>' +
@@ -35,7 +35,7 @@ $(document).ready(function () {
             text: '<i class="bx bx-printer me-2" ></i>Imprimir',
             className: 'dropdown-item',
             exportOptions: {
-              columns: [1, 2, 3, 4, 5],
+              columns: [0, 1, 2, 3],
               // prevent avatar to be print
               format: {
                 body: function (inner, coldex, rowdex) {
@@ -72,7 +72,7 @@ $(document).ready(function () {
             text: '<i class="bx bx-file me-2" ></i>Csv',
             className: 'dropdown-item',
             exportOptions: {
-              columns: [1, 2, 3, 4, 5],
+              columns: [0, 1, 2, 3],
               // prevent avatar to be display
               format: {
                 body: function (inner, coldex, rowdex) {
@@ -96,7 +96,7 @@ $(document).ready(function () {
             text: '<i class="bx bxs-file-export me-2"></i>Excel',
             className: 'dropdown-item',
             exportOptions: {
-              columns: [1, 2, 3, 4, 5],
+              columns: [0, 1, 2, 3],
               // prevent avatar to be display
               format: {
                 body: function (inner, coldex, rowdex) {
@@ -120,7 +120,7 @@ $(document).ready(function () {
             text: '<i class="bx bxs-file-pdf me-2"></i>Pdf',
             className: 'dropdown-item',
             exportOptions: {
-              columns: [1, 2, 3, 4, 5],
+              columns: [0, 1, 2, 3],
               // prevent avatar to be display
               format: {
                 body: function (inner, coldex, rowdex) {
@@ -144,7 +144,7 @@ $(document).ready(function () {
             text: '<i class="bx bx-copy me-2" ></i>Copiar',
             className: 'dropdown-item',
             exportOptions: {
-              columns: [1, 2, 3, 4, 5],
+              columns: [0, 1, 2, 3],
               // prevent avatar to be display
               format: {
                 body: function (inner, coldex, rowdex) {
@@ -172,14 +172,17 @@ $(document).ready(function () {
         previous: '<i class="fas fa-chevron-left"></i>'
       }
     },
+    rowGroup: {
+      "dataSrc": 2
+    },
     columnDefs: [
       {
-        targets: [3],
+        targets: [2],
         visible: false,
         searchable: true
       },
       {
-        targets: [4],
+        targets: [3],
         orderable: false
       }]
 
@@ -190,7 +193,7 @@ $(document).ready(function () {
     var module = $(this).val();
 
     // Aplicar filtro al DataTable a la columna Modulo
-    dt_permissions.columns(3).search(module).draw();
+    dt_permissions.columns(2).search(module).draw();
   });
 
   /**

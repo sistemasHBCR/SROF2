@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class notification extends Model
 {
+    protected $hidden = ['pivot'];
     use HasFactory;
 }

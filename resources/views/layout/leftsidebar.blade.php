@@ -108,37 +108,48 @@
                 </ul>
             </li>
         @endcanany
-        @canany(['parameters.index'])
-        <li class="menu-item {{ request()->is('parameters*') ? 'active' : '' }}">
-            <a href="{{ route('parameters.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-data"></i>
-                <div data-i18n="Parametros">Parametros</div>
-            </a>
-        </li>
+        
+        @canany(['parameters.tc','parameters.costs', 'parameters.costresidences'])
+            <li class="menu-item {{ request()->is('parameters*') ? 'active' : '' }}">
+                <a href="{{ route('parameters.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-data"></i>
+                    <div data-i18n="Parametros">Parametros</div>
+                </a>
+            </li>
         @endcanany
-        @canany(['users.index'])
-        <li class="menu-item  {{ request()->is('users*') ? 'active' : '' }}">
-            <a href="{{ route('users.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-user"></i>
-                <div data-i18n="Usuarios">Usuarios</div>
-            </a>
-        </li>
-        @endcanany
-        @canany(['roles.index'])
-        <li class="menu-item  {{ request()->is('roles*') ? 'active' : '' }}">
-            <a href="{{ route('roles.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-check-shield"></i>
-                <div data-i18n="Roles">Roles</div>
-            </a>
-        </li>
+
+        @canany(['roles.index', 'users.index'])
+            <li class="menu-item {{ request()->is('users*') ? 'open' : '' }} {{ request()->is('roles*') ? 'open' : '' }}"
+                style="">
+                <a href="#" class="menu-link menu-toggle pr-2">
+                    <i class="menu-icon tf-icons bx bx-check-shield"></i>
+                    <div data-i18n="Roles & permisos">Roles & permisos</div>
+                </a>
+                <ul class="menu-sub">
+                    @canany(['users.index'])
+                        <li class="menu-item  {{ request()->is('users*') ? 'active' : '' }}">
+                            <a href="{{ route('users.index') }}" class="menu-link">
+                                <div data-i18n="Usuarios">Usuarios</div>
+                            </a>
+                        </li>
+                    @endcanany
+                    @canany(['roles.index'])
+                        <li class="menu-item  {{ request()->is('roles*') ? 'active' : '' }}">
+                            <a href="{{ route('roles.index') }}" class="menu-link">
+                                <div data-i18n="Roles">Roles</div>
+                            </a>
+                        </li>
+                    @endcanany
+                </ul>
+            </li>
         @endcanany
         @canany(['audit.index'])
-        <li class="menu-item">
-            <a href="{{ route('audit.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-table"></i>
-                <div data-i18n="Auditoria">Auditoria</div>
-            </a>
-        </li>
+            <li class="menu-item">
+                <a href="{{ route('audit.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-table"></i>
+                    <div data-i18n="Auditoria">Auditoria</div>
+                </a>
+            </li>
         @endcanany
     </ul>
 </aside>

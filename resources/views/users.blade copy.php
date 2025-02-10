@@ -41,7 +41,7 @@
                                 class="d-flex justify-content-between align-items-start card-widget-1 border-end pb-3 pb-sm-0">
                                 <div>
                                     <h3 class="mb-2" id="usersregisters">{{ $users->count() }}</h3>
-                                    <p class="mb-0">Registrados</p>
+                                    <p class="mb-0" >Registrados</p>
                                 </div>
                                 <div class="avatar me-sm-4">
                                     <span class="avatar-initial rounded bg-label-secondary">
@@ -136,7 +136,8 @@
             <div class="card-header border-bottom">
                 <h5 class="card-title">Lista de usuarios</h5>
             </div>
-            <div class="card-datatable table-responsive" id="dataUsers">
+            <div 
+            class="card-datatable table-responsive" id="dataUsers">
                 <table class="datatables-users table" id="tb-users">
                     <thead class="border-top">
                         <tr>
@@ -193,11 +194,13 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @canany(['users.edit'])
-                                        <button type="button" class="data-user btn btn-primary btn-sm"
-                                            data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddUser"
-                                            id="{{ $user->id }}">Editar</button>
-                                    @endcanany
+                                    @if (Auth::user()->id != $user->id)
+                                        @canany(['users.edit'])
+                                            <button type="button" class="data-user btn btn-primary btn-sm"
+                                                data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddUser"
+                                                id="{{ $user->id }}">Editar</button>
+                                        @endcanany
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -214,146 +217,92 @@
                     <input type="hidden" id="userid" value="">
                 </div>
                 <div class="offcanvas-body mx-0 flex-grow-0">
-                    <!-- Pestañas -->
-                    <ul class="nav nav-tabs mb-3" id="userTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="general-tab" data-bs-toggle="tab"
-                                data-bs-target="#general" type="button" role="tab" aria-controls="general"
-                                aria-selected="true">Datos Generales</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="notifications-tab" data-bs-toggle="tab"
-                                data-bs-target="#notifications" type="button" role="tab"
-                                aria-controls="notifications" aria-selected="false">Notificaciones</button>
-                        </li>
-                    </ul>
-
-                    <!-- Contenido de las pestañas -->
-                    <div class="tab-content" id="userTabsContent">
-                        <!-- Pestaña de Datos Generales -->
-                        <div class="tab-pane fade show active" id="general" role="tabpanel"
-                            aria-labelledby="general-tab">
-                            <form class="add-new-user pt-0" id="formusers" onsubmit="return false">
-                                <!-- Campos del formulario principal (los que ya tenías) -->
-                                <div class="mb-3">
-                                    <label class="form-label" for="name">Nombre</label>
-                                    <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                        id="name" placeholder="Nombre" name="nombre" aria-label="" required />
-                                    @error('name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="last_name">Apellido</label>
-                                    <input type="text" class="form-control  @error('last_name') is-invalid @enderror"
-                                        id="last_name" placeholder="Apellidos" name="last_name" aria-label=""
-                                        required />
-                                    @error('last_name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="email">Email (No obligatorio)</label>
-                                    <input type="text" id="email"
-                                        class="form-control @error('email') is-invalid @enderror"
-                                        placeholder="user@example.com" aria-label="juser@example.com" name="email" />
-                                    @error('email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="username">Usuario</label>
-                                    <input type="text" id="username"
-                                        class="form-control @error('username') is-invalid @enderror"
-                                        placeholder="Usuario unico" aria-label="username" name="username" required />
-                                    @error('username')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="mb-3" id="contentroles">
-                                    <label class="form-label" for="country">Roles</label>
-                                    <select id="roles"
-                                        name="roles"class="form-select @error('roles') is-invalid @enderror" required>
-                                        <option value="">Default select</option>
-                                        @foreach ($roles as $rol)
-                                            <option value="{{ $rol->name }}">{{ $rol->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('roles')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <hr>
-                                <div class="mb-3">
-                                    <div class="form-check form-check-inline mt-3 change_password">
-                                        <input class="form-check-input" type="checkbox" id="change_password"
-                                            value="">
-                                        <label class="form-check-label form-text text-primary" for="change_password">Nueva
-                                            contraseña</label>
-                                    </div>
-                                    <div class="form-check form-check-inline change_next_login">
-                                        <input class="form-check-input" type="checkbox" id="change_next_login"
-                                            value="Y">
-                                        <label class="form-check-label form-text text-primary"
-                                            for="change_next_login">Cambiar al
-                                            siguiente login</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="password">Contraseña</label>
-                                    <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                        id="password" placeholder="Nueva contraseña" name="password" aria-label=""
-                                        required autocomplete="new-password" />
-                                    @error('password')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="password_confirmation">Confirmar contraseña</label>
-                                    <input type="password"
-                                        class="form-control @error('password_confirmation') is-invalid @enderror"
-                                        id="password_confirmation" placeholder="Confirmar contraseña"
-                                        name="password_confirmation" aria-label="" required
-                                        autocomplete="new-password" />
-                                    @error('password_confirmation')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <!-- Botones de acción dentro del formulario -->
-                                <div class="mt-3">
-                                    <button type="submit" id="btnupdate" class="update btn btn-primary">Guardar</button>
-                                    <button type="submit" id="btnnew" class="new btn btn-primary">Crear</button>
-                                    <button type="reset" id="btncancel" class="btn-cancel btn btn-label-secondary"
-                                        data-bs-dismiss="offcanvas">Cancelar</button>
-                                </div>
-                            </form>
+                    <form class="add-new-user pt-0" id="formusers" onsubmit="return false">
+                        <div class="mb-3">
+                            <label class="form-label" for="name">Nombre</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
+                                placeholder="Nombre" name="nombre" id="name" aria-label="" required />
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-
-                        <!-- Pestaña de Notificaciones -->
-                        <div class="tab-pane fade" id="notifications" role="tabpanel"
-                            aria-labelledby="notifications-tab">
-                            <form class="pt-0">
-                                <label class="form-label mb-3">Notificaciones Disponibles</label>
-                                @foreach ($notifications->groupby('concept') as $gpnotification)
-                                    <div class="concept-container mb-4">
-                                        <h5 class="concept-title">{{ $gpnotification->first()->concept }}</h5>
-                                        <div class="mb-3">
-                                            @foreach ($gpnotification as $notification)
-                                                <div class="form-check mb-2">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        id="notification{{ $notification->id }}" name="notifications"
-                                                        value="{{ $notification->id }}">
-                                                    <label class="form-check-label"
-                                                        for="notification{{ $notification->id }}">{{ $notification->description }}</label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="last_name">Apellido</label>
+                            <input type="text" class="form-control  @error('last_name') is-invalid @enderror"
+                                id="last_name" placeholder="Apellidos" name="last_name" aria-label="" required />
+                            @error('last_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="email">Email (No obligatorio)</label>
+                            <input type="text" id="email"
+                                class="form-control @error('email') is-invalid @enderror" placeholder="user@example.com"
+                                aria-label="juser@example.com" name="email" />
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="username">Usuario</label>
+                            <input type="text" id="username"
+                                class="form-control @error('username') is-invalid @enderror" placeholder="Usuario unico"
+                                aria-label="username" name="username" required />
+                            @error('username')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="country">Roles</label>
+                            <select id="roles" name="roles"class="form-select @error('roles') is-invalid @enderror"
+                                required>
+                                <option value="">Default select</option>
+                                @foreach ($roles as $rol)
+                                    <option value="{{ $rol->name }}">{{ $rol->name }}</option>
                                 @endforeach
-                            </form>
+                            </select>
+                            @error('roles')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                    </div>
+                        <hr>
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline mt-3 change_password">
+                                <input class="form-check-input" type="checkbox" id="change_password" value="">
+                                <label class="form-check-label form-text text-primary" for="change_password">Nueva
+                                    contraseña</label>
+                            </div>
+                            <div class="form-check form-check-inline change_next_login">
+                                <input class="form-check-input" type="checkbox" id="change_next_login" value="Y">
+                                <label class="form-check-label form-text text-primary" for="change_next_login">Cambiar al
+                                    siguiente login</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="password">Contraseña</label>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror"
+                                id="password" placeholder="Nueva contraseña" name="password" aria-label="" required
+                                autocomplete="new-password" />
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="password_confirmation">Confirmar contraseña</label>
+                            <input type="password"
+                                class="form-control @error('password_confirmation') is-invalid @enderror"
+                                id="password_confirmation" placeholder="Confirmar contraseña"
+                                name="password_confirmation" aria-label="" required autocomplete="new-password" />
+                            @error('password_confirmation')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <button type="submit" id="btnupdate" class="update btn btn-primary">Guardar</button>
+                        <button type="submit" id="btnnew" class="new btn btn-primary">Crear</button>
+                        <button type="reset" id="" class="btn-cancel btn btn-label-secondary"
+                            data-bs-dismiss="offcanvas">Cancel</button>
+                    </form>
                 </div>
             </div>
         </div>

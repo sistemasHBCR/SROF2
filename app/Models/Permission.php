@@ -9,3 +9,4 @@ class Permission extends SpatiePermissions
 {
     use HasFactory;
 }
+
